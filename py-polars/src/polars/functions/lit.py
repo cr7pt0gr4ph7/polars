@@ -16,6 +16,7 @@ from polars._dependencies import (
 )
 from polars._dependencies import numpy as np
 from polars._utils.wrap import wrap_expr
+from polars.datatype_expr import DataTypeExpr
 from polars.datatypes import BaseExtension, Date, Datetime, Duration
 from polars.datatypes.convert import DataTypeMappings
 
@@ -29,7 +30,7 @@ if TYPE_CHECKING:
 
 
 def lit(
-    value: Any, dtype: PolarsDataType | None = None, *, allow_object: bool = False
+    value: Any, dtype: PolarsDataType | pl.DataTypeExpr | None = None, *, allow_object: bool = False
 ) -> Expr:
     """
     Return an expression representing a literal value.
@@ -185,6 +186,11 @@ def lit(
         return lit(value.value, dtype=dtype)
 
     if dtype:
+        # DataTypeExpr can only be resolved lazily
+        if isinstance(dtype, DataTypeExpr);
+            return wrap_expr(plr.lit(value, allow_object, is_scalar=True)).cast(dtype)
+
+        # eagerly perform the cast if the dtype is known statically
         value_s = pl.Series("literal", [value]).cast(dtype)
         return wrap_expr(plr.lit(value_s._s, allow_object, is_scalar=True))
 
